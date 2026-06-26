@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Submit</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f5f5f3;min-height:100vh;padding-bottom:3rem}
+.topbar{background:#1a1a1a;color:#fff;padding:14px 1.25rem;display:flex;align-items:center;justify-content:space-between}
+.topbar h1{font-size:15px;font-weight:600}
+.tabs{display:flex;background:#fff;border-bottom:1px solid #e5e5e3}
+.tab{flex:1;padding:13px;font-size:13px;font-weight:500;text-align:center;cursor:pointer;color:#999;border:none;background:transparent;border-bottom:2px solid transparent}
+.tab.active{color:#1a1a1a;border-bottom-color:#1a1a1a}
+.body{max-width:430px;margin:0 auto;padding:1.25rem 1rem}
+.card{background:#fff;border-radius:12px;border:1px solid #e5e5e3;padding:1.25rem;margin-bottom:1rem;margin-top:.5rem}
+label{font-size:13px;color:#555;display:block;margin-bottom:5px;margin-top:14px}
+label:first-of-type{margin-top:0}
+input[type=text],input[type=tel],input[type=number],input[type=date]{width:100%;padding:10px 12px;font-size:14px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;outline:none}
+input:focus{border-color:#1a1a1a}
+.type-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.type-btn{padding:14px 10px;border:1.5px solid #ddd;border-radius:10px;text-align:center;cursor:pointer;background:#fff}
+.type-btn.sel{border-color:#1a1a1a;background:#f0f0ee}
+.ico{font-size:22px;display:block;margin-bottom:5px}
+.lbl{font-size:13px;font-weight:600;color:#1a1a1a}
+.sub{font-size:11px;color:#aaa;margin-top:2px}
+.submit-btn{width:100%;padding:13px;background:#1a1a1a;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer}
+.submit-btn:hover{background:#333}
+.err{font-size:12px;color:#dc2626;margin-top:4px;display:none}
+.amt-wrap{display:flex;align-items:center;gap:8px}
+.amt-wrap .rs{font-size:15px;color:#555;font-weight:500}
+.amt-wrap input{flex:1}
+.success{text-align:center;padding:3rem 1rem}
+.success h2{font-size:18px;font-weight:600;color:#1a1a1a;margin-bottom:8px}
+.success p{font-size:13px;color:#777;line-height:1.7}
+.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600}
+.badge.pending{background:#FEF3C7;color:#92400E}
+.badge.approved{background:#DCFCE7;color:#166534}
+.badge.rejected{background:#FEE2E2;color:#991b1b}
+.badge.cash{background:#FEF9EC;color:#854F0B}
+.badge.online{background:#EFF6FF;color:#1e40af}
+.lookup-row{display:flex;gap:8px;margin-bottom:1rem}
+.lookup-row input{flex:1}
+.lookup-row button{padding:10px 16px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.sum-box{background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem}
+.sum-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid #f5f5f3}
+.sum-row:last-child{border:none;font-weight:700;font-size:14px;padding-top:10px}
+.sum-label{color:#777}
+.green{color:#166534}.amber{color:#b45309}.red{color:#991b1b}
+.txn{background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:12px 14px;margin-bottom:8px}
+.txn-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.txn-name{font-size:14px;font-weight:600;color:#1a1a1a}
+.txn-amt{font-size:16px;font-weight:700;color:#1a1a1a;white-space:nowrap}
+.txn-badges{margin-top:5px;display:flex;gap:6px;flex-wrap:wrap}
+.txn-detail{font-size:12px;color:#888;margin-top:7px}
+.txn-time{font-size:11px;color:#bbb;margin-top:6px;line-height:1.7}
+.sec-label{font-size:11px;font-weight:700;color:#aaa;text-transform:uppercase;letter-spacing:.6px;margin:1rem 0 8px}
+.empty{text-align:center;padding:3rem;color:#bbb;font-size:14px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <h1>Payment Manager</h1>
+  <span id="clk" style="font-size:12px;color:#999"></span>
+</div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('s')">Submit Payment</button>
+  <button class="tab" onclick="showTab('h')">My History</button>
+</div>
+<div class="body">
+
+  <div id="ts">
+    <div id="fv">
+      <div class="card">
+        <label>Your Name *</label>
+        <input type="text" id="nm" placeholder="e.g. Rahul Sharma" />
+        <div class="err" id="e-nm">Please enter your name.</div>
+
+        <label>Mobile Number *</label>
+        <input type="tel" id="mb" placeholder="e.g. 9876543210" maxlength="10" />
+        <div class="err" id="e-mb">Please enter your mobile number.</div>
+
+        <label>Amount *</label>
+        <div class="amt-wrap">
+          <span class="rs">Rs.</span>
+          <input type="number" id="am" placeholder="500" min="1" />
+        </div>
+        <div class="err" id="e-am">Please enter a valid amount.</div>
+
+        <label>Payment Method *</label>
+        <div class="type-row">
+          <div class="type-btn sel" id="bc" onclick="selType('cash')">
+            <span class="ico">&#128181;</span>
+            <div class="lbl">Cash</div>
+            <div class="sub">Paid in hand</div>
+          </div>
+          <div class="type-btn" id="bo" onclick="selType('online')">
+            <span class="ico">&#128242;</span>
+            <div class="lbl">Online</div>
+            <div class="sub">UPI / Transfer</div>
+          </div>
+        </div>
+
+        <label>Payment Date *</label>
+        <input type="date" id="dt" />
+        <div class="err" id="e-dt">Please select a date.</div>
+      </div>
+      <button class="submit-btn" onclick="doSubmit()">Submit Request</button>
+    </div>
+
+    <div class="success" id="sv" style="display:none">
+      <div style="font-size:52px;margin-bottom:14px">&#9989;</div>
+      <h2>Request Submitted!</h2>
+      <p>Your payment has been sent to the admin.<br>Go to <b>My History</b> tab anytime to track your status.</p>
+      <br>
+      <span class="badge pending">Awaiting admin approval</span>
+      <br><br>
+      <button class="submit-btn" style="max-width:200px;margin:0 auto;display:block" onclick="doReset()">Submit Another</button>
+    </div>
+  </div>
+
+  <div id="th" style="display:none">
+    <div style="margin-top:.5rem">
+      <p style="font-size:13px;color:#888;margin-bottom:12px">Enter your name to see all your payments and their approval status.</p>
+      <div class="lookup-row">
+        <input type="text" id="lk" placeholder="Your name..." onkeydown="if(event.key==='Enter')doLookup()" />
+        <button onclick="doLookup()">Search</button>
+      </div>
+      <div id="hc"></div>
+    </div>
+  </div>
+
+</div>
+<script type="module">
+  import {
+    db,
+    ref,
+    push,
+    set,
+    get,
+    onValue,
+    update
+} from "./firebase-config.js";
+
+// Your existing JavaScript starts here
+var pt='cash';
+var td=new Date().toISOString().split('T')[0];
+document.getElementById('dt').value=td;
+setInterval(function(){
+  var n=new Date();
+  document.getElementById('clk').textContent=n.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+},1000);
+function showTab(t){
+  document.getElementById('ts').style.display=t==='s'?'block':'none';
+  document.getElementById('th').style.display=t==='h'?'block':'none';
+  var tbs=document.querySelectorAll('.tab');
+  tbs[0].className='tab'+(t==='s'?' active':'');
+  tbs[1].className='tab'+(t==='h'?' active':'');
+}
+function selType(t){
+  pt=t;
+  document.getElementById('bc').className='type-btn'+(t==='cash'?' sel':'');
+  document.getElementById('bo').className='type-btn'+(t==='online'?' sel':'');
+}
+function fmt(n){return 'Rs.'+Number(n).toLocaleString('en-IN');}
+function fmtDT(iso){
+  var d=new Date(iso);
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})+' at '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+function doSubmit(){
+  var nm=document.getElementById('nm').value.trim();
+  var mb=document.getElementById('mb').value.trim();
+  var am=parseFloat(document.getElementById('am').value);
+  var dt=document.getElementById('dt').value;
+  document.getElementById('e-nm').style.display=!nm?'block':'none';
+  document.getElementById('e-mb').style.display=!mb?'block':'none';
+  document.getElementById('e-am').style.display=(!am||am<=0)?'block':'none';
+  document.getElementById('e-dt').style.display=!dt?'block':'none';
+  if(!nm||!mb||!am||am<=0||!dt)return;
+ var entry = {
+    id: Date.now(),
+    name: nm,
+    mobile: mb,
+    amount: am,
+    type: pt,
+    date: dt,
+    status: "pending",
+    submittedAt: new Date().toISOString()
+};
+
+const paymentRef = push(ref(db, "payments"));
+
+set(paymentRef, entry)
+.then(() => {
+    document.getElementById("fv").style.display = "none";
+    document.getElementById("sv").style.display = "block";
+})
+.catch((error) => {
+    alert("Error: " + error.message);
+});
+}
+function doReset(){
+  document.getElementById('fv').style.display='block';
+  document.getElementById('sv').style.display='none';
+  document.getElementById('nm').value='';
+  document.getElementById('mb').value='';
+  document.getElementById('am').value='';
+  document.getElementById('dt').value=td;
+  selType('cash');
+}
+async function doLookup(){
+  var q=document.getElementById('lk').value.trim().toLowerCase();
+  if(!q){document.getElementById('hc').innerHTML='<div class="empty">Enter your name above to search.</div>';return;}
+  const snapshot = await get(ref(db, "payments"));
+
+if (!snapshot.exists()) {
+    document.getElementById("hc").innerHTML =
+    '<div class="empty">No records found.</div>';
+    return;
+}
+
+var all = Object.values(snapshot.val());
+
+var mine = all.filter(function(r){
+    return r.name.toLowerCase().indexOf(q)!==-1;
+});
+  if(!mine.length){document.getElementById('hc').innerHTML='<div class="empty">No records found. Check your name spelling.</div>';return;}
+  var appr=mine.filter(function(r){return r.status==='approved';});
+  var pend=mine.filter(function(r){return r.status==='pending';});
+  var rejt=mine.filter(function(r){return r.status==='rejected';});
+  var totA=appr.reduce(function(s,r){return s+r.amount;},0);
+  var totP=pend.reduce(function(s,r){return s+r.amount;},0);
+  var totC=appr.filter(function(r){return r.type==='cash';}).reduce(function(s,r){return s+r.amount;},0);
+  var totO=appr.filter(function(r){return r.type==='online';}).reduce(function(s,r){return s+r.amount;},0);
+  var sorted=mine.slice().sort(function(a,b){return b.id-a.id;});
+  var rows=sorted.map(function(r){
+    var sl=r.status==='pending'?'Pending':r.status==='approved'?'Approved':'Rejected';
+    var ra=r.resolvedAt?'<br>'+(r.status==='approved'?'Approved':'Rejected')+': '+fmtDT(r.resolvedAt):'';
+    return '<div class="txn"><div class="txn-top"><div><div class="txn-name">'+r.name+'</div><div class="txn-badges"><span class="badge '+r.type+'">'+(r.type==='cash'?'Cash':'Online')+'</span> <span class="badge '+r.status+'">'+sl+'</span></div></div><div class="txn-amt">'+fmt(r.amount)+'</div></div><div class="txn-detail">Payment date: <b style="color:#1a1a1a">'+r.date+'</b> &nbsp;|&nbsp; Mobile: '+r.mobile+'</div><div class="txn-time">Submitted: '+fmtDT(r.submittedAt)+ra+'</div></div>';
+  }).join('');
+document.getElementById('hc').innerHTML ='<div class="sum-box"> ... </div><div class="sec-label">All Transactions</div>' + rows;}
+window.showTab = showTab;
+window.selType = selType;
+window.doSubmit = doSubmit;
+window.doReset = doReset;
+window.doLookup = doLookup;
+</script>
+</body>
+</html>

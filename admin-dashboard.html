@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Payment Manager</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:system-ui,sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh}
+  .topbar{background:#1a1a1a;color:#fff;padding:14px 1.5rem;display:flex;align-items:center;justify-content:space-between}
+  .topbar h1{font-size:16px;font-weight:600}
+  .topbar span{font-size:13px;color:#aaa}
+  .main{max-width:800px;margin:0 auto;padding:1.5rem 1rem}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+  .stat{background:#fff;border:1px solid #e5e5e3;border-radius:10px;padding:12px 14px}
+  .stat-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+  .stat-val{font-size:20px;font-weight:600;color:#1a1a1a}
+  .stat-val.green{color:#15803d}
+  .stat-val.amber{color:#b45309}
+  .stat-val.red{color:#dc2626}
+  .tabs{display:flex;gap:6px;margin-bottom:1rem}
+  .tab{padding:7px 16px;font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;border:1px solid #ddd;background:#fff;color:#555}
+  .tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+  .badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;font-weight:500}
+  .badge.pending{background:#FEF3C7;color:#92400E}
+  .badge.approved{background:#DCFCE7;color:#15803d}
+  .badge.rejected{background:#FEE2E2;color:#dc2626}
+  .badge.cash{background:#FEF9EC;color:#854F0B}
+  .badge.online{background:#E6F1FB;color:#185FA5}
+  .card{background:#fff;border:1px solid #e5e5e3;border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px}
+  .req-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .avatar{width:38px;height:38px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#185FA5;flex-shrink:0}
+  .req-info{flex:1;min-width:0}
+  .req-name{font-size:14px;font-weight:600;color:#1a1a1a}
+  .req-sub{font-size:12px;color:#888;margin-top:2px}
+  .req-amount{font-size:18px;font-weight:700;color:#1a1a1a;white-space:nowrap}
+  .req-details{margin-top:10px;padding-top:10px;border-top:1px solid #f0f0ee;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .detail-item{font-size:12px;color:#666}
+  .detail-item span{color:#1a1a1a;font-weight:500}
+  .action-row{display:flex;gap:8px;margin-top:12px}
+  .btn{padding:8px 16px;font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;border:1px solid #ddd}
+  .btn-approve{background:#15803d;color:#fff;border-color:#15803d}
+  .btn-approve:hover{background:#166534}
+  .btn-reject{background:#fff;color:#dc2626;border-color:#fca5a5}
+  .btn-reject:hover{background:#FEE2E2}
+  .btn-note{background:#fff;color:#555;border-color:#ddd}
+  .btn-note:hover{background:#f5f5f3}
+  .empty{text-align:center;padding:3rem;color:#aaa;font-size:14px}
+  .week-header{font-size:13px;font-weight:600;color:#555;margin:1.2rem 0 8px;padding-bottom:6px;border-bottom:1px solid #eee}
+  .week-total{float:right;font-weight:600;color:#15803d}
+  .filter-row{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+  .filter-row select{padding:7px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a}
+  .note-popup{display:none;margin-top:8px;border-top:1px dashed #eee;padding-top:8px}
+  .note-popup textarea{width:100%;padding:8px;font-size:13px;border:1px solid #ddd;border-radius:8px;resize:none;height:60px}
+  .note-popup button{margin-top:6px;padding:6px 14px;font-size:12px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;cursor:pointer}
+  .note-text{font-size:12px;color:#666;font-style:italic;margin-top:6px;border-left:3px solid #ddd;padding-left:8px}
+  .login{max-width:340px;margin:4rem auto;background:#fff;border:1px solid #e5e5e3;border-radius:14px;padding:2rem}
+  .login h2{font-size:18px;font-weight:600;margin-bottom:1rem;text-align:center}
+  .login input{width:100%;padding:10px 12px;font-size:14px;border:1px solid #ddd;border-radius:8px;margin-bottom:10px}
+  .login button{width:100%;padding:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+  .login .err{font-size:12px;color:#dc2626;text-align:center;margin-top:8px}
+  .export-btn{padding:7px 14px;font-size:13px;background:#fff;border:1px solid #ddd;border-radius:8px;cursor:pointer;color:#555}
+  .export-btn:hover{background:#f5f5f3}
+  @media(max-width:500px){.stats{grid-template-columns:1fr 1fr}.req-details{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="login-screen" class="login">
+  <h2>🔐 Admin Login</h2>
+  <input type="password" id="admin-pass" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')doLogin()" />
+  <button onclick="doLogin()">Login</button>
+  <div class="err" id="login-err"></div>
+  <p style="font-size:11px;color:#aaa;text-align:center;margin-top:12px">Default password: <b>meet@123</b> (change in settings)</p>
+</div>
+
+<div id="admin-panel" style="display:none">
+  <div class="topbar">
+    <h1>💳 Payment Manager — Admin</h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="export-btn" style="background:#333;color:#fff;border-color:#555" onclick="exportCSV()">⬇ Export CSV</button>
+      <span id="clock"></span>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats" id="stats"></div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('pending')">⏳ Pending <span id="pending-count"></span></button>
+        <button class="tab" onclick="showTab('approved')">✅ Approved</button>
+        <button class="tab" onclick="showTab('rejected')">❌ Rejected</button>
+        <button class="tab" onclick="showTab('history')">📊 Weekly</button>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <select id="filter-type" onchange="render()">
+        <option value="">All types</option>
+        <option value="cash">Cash</option>
+        <option value="online">Online</option>
+      </select>
+      <select id="filter-person" onchange="render()">
+        <option value="">All friends</option>
+      </select>
+      <input type="date" id="filter-from" onchange="render()" style="padding:7px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a" />
+      <input type="date" id="filter-to" onchange="render()" style="padding:7px 10px;font-size:13px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a" />
+    </div>
+
+    <div id="content"></div>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    db,
+    ref,
+    get,
+    onValue,
+    update,
+    remove
+} from "./firebase-config.js";
+
+const PASS = 'meet@123';
+let currentTab = 'pending';
+
+function doLogin() {
+  const p = document.getElementById('admin-pass').value;
+  if (p === PASS) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    render();
+    setInterval(updateClock, 1000);
+    updateClock();
+  } else {
+    document.getElementById('login-err').textContent = 'Wrong password. Try again.';
+  }
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN');
+}
+
+let allRequests = [];
+
+const paymentsRef = ref(db, "payments");
+
+onValue(paymentsRef, (snapshot) => {
+
+    if (snapshot.exists()) {
+
+        allRequests = Object.entries(snapshot.val()).map(([key, value]) => ({
+            firebaseKey: key,
+            ...value
+        }));
+
+    } else {
+
+        allRequests = [];
+
+    }
+
+    render();
+
+});
+
+function fmt(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
+
+function initials(name) {
+  return name.trim().split(' ').map(w=>w[0].toUpperCase()).slice(0,2).join('');
+}
+
+function getWeekKey(dateStr) {
+  const d = new Date(dateStr);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day===0?-6:1);
+  const mon = new Date(d.setDate(diff));
+  return mon.toISOString().split('T')[0];
+}
+
+function weekLabel(key) {
+  const start = new Date(key);
+  const end = new Date(key);
+  end.setDate(end.getDate() + 6);
+  return `Week of ${start.toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${end.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
+}
+
+function applyFilters(list) {
+  const type = document.getElementById('filter-type').value;
+  const person = document.getElementById('filter-person').value;
+  const from = document.getElementById('filter-from').value;
+  const to = document.getElementById('filter-to').value;
+  return list.filter(r => {
+    if (type && r.type !== type) return false;
+    if (person && r.name !== person) return false;
+    if (from && r.date < from) return false;
+    if (to && r.date > to) return false;
+    return true;
+  });
+}
+
+function populatePersonFilter() {
+  const all = allRequests;
+  const names = [...new Set(all.map(r=>r.name))].sort();
+  const sel = document.getElementById('filter-person');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All friends</option>' + names.map(n=>`<option value="${n}">${n}</option>`).join('');
+  sel.value = cur;
+}
+
+function renderStats() {
+  const all = allRequests;
+  const approved = all.filter(r=>r.status==='approved');
+  const pending = all.filter(r=>r.status==='pending');
+  const cash = approved.filter(r=>r.type==='cash').reduce((s,r)=>s+r.amount,0);
+  const online = approved.filter(r=>r.type==='online').reduce((s,r)=>s+r.amount,0);
+  const total = approved.reduce((s,r)=>s+r.amount,0);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-label">Total Collected</div><div class="stat-val green">${fmt(total)}</div></div>
+    <div class="stat"><div class="stat-label">Cash</div><div class="stat-val amber">${fmt(cash)}</div></div>
+    <div class="stat"><div class="stat-label">Online</div><div class="stat-val" style="color:#185FA5">${fmt(online)}</div></div>
+    <div class="stat"><div class="stat-label">Pending Requests</div><div class="stat-val red">${pending.length}</div></div>
+  `;
+  document.getElementById('pending-count').textContent = pending.length > 0 ? `(${pending.length})` : '';
+}
+
+function cardHTML(r) {
+  const note = r.note ? `<div class="note-text">📝 ${r.note}</div>` : '';
+  const actions = r.status === 'pending' ? `
+    <div class="action-row">
+      <button class="btn btn-approve" onclick="approve(${r.id})">✅ Approve</button>
+      <button class="btn btn-reject" onclick="reject(${r.id})">❌ Reject</button>
+      <button class="btn btn-note" onclick="toggleNote(${r.id})">📝 Note</button>
+    </div>
+    <div class="note-popup" id="note-${r.id}">
+      <textarea id="note-text-${r.id}" placeholder="Add a note..."></textarea>
+      <button onclick="saveNote(${r.id})">Save note</button>
+    </div>
+  ` : `<div class="action-row" style="margin-top:10px">
+    ${r.status==='approved' ? `<button class="btn btn-reject" onclick="setStatus(${r.id},'rejected')">Undo / Reject</button>` : `<button class="btn btn-approve" onclick="setStatus(${r.id},'approved')">Undo / Approve</button>`}
+  </div>`;
+
+  return `<div class="card" id="card-${r.id}">
+    <div class="req-header">
+      <div class="avatar">${initials(r.name)}</div>
+      <div class="req-info">
+        <div class="req-name">${r.name} ${r.mobile?'<span style="font-weight:400;color:#888;font-size:12px">· '+r.mobile+'</span>':''}</div>
+        <div class="req-sub">${r.purpose} · ${r.date} &nbsp;<span class="badge ${r.type}">${r.type==='cash'?'💵 Cash':'📱 Online'}</span> &nbsp;<span class="badge ${r.status}">${r.status}</span></div>
+      </div>
+      <div class="req-amount">${fmt(r.amount)}</div>
+    </div>
+    ${r.txnid || r.app ? `<div class="req-details">
+      ${r.txnid?`<div class="detail-item">Txn ID: <span>${r.txnid}</span></div>`:''}
+      ${r.app?`<div class="detail-item">App: <span>${r.app}</span></div>`:''}
+    </div>`:''}
+    ${note}
+    ${actions}
+  </div>`;
+}
+
+function renderContent(list, tab) {
+  if (!list.length) {
+    document.getElementById('content').innerHTML = '<div class="empty">No entries here yet.</div>';
+    return;
+  }
+  if (tab === 'history') {
+    const byWeek = {};
+    list.filter(r=>r.status==='approved').forEach(r => {
+      const wk = getWeekKey(r.date);
+      if (!byWeek[wk]) byWeek[wk] = [];
+      byWeek[wk].push(r);
+    });
+    const weeks = Object.keys(byWeek).sort().reverse();
+    if (!weeks.length) { document.getElementById('content').innerHTML = '<div class="empty">No approved payments yet.</div>'; return; }
+    document.getElementById('content').innerHTML = weeks.map(wk => {
+      const entries = byWeek[wk];
+      const total = entries.reduce((s,r)=>s+r.amount,0);
+      const cash = entries.filter(r=>r.type==='cash').reduce((s,r)=>s+r.amount,0);
+      const online = entries.filter(r=>r.type==='online').reduce((s,r)=>s+r.amount,0);
+      return `<div class="week-header">${weekLabel(wk)} <span class="week-total">${fmt(total)} total &nbsp;|&nbsp; 💵${fmt(cash)} &nbsp;📱${fmt(online)}</span></div>
+      ${entries.sort((a,b)=>b.date.localeCompare(a.date)).map(cardHTML).join('')}`;
+    }).join('');
+  } else {
+    document.getElementById('content').innerHTML = list.sort((a,b)=>b.id-a.id).map(cardHTML).join('');
+  }
+}
+
+function render() {
+  populatePersonFilter();
+  renderStats();
+  const all = allRequests;
+  const filtered = applyFilters(all);
+  const tab = currentTab;
+  const map = { pending: filtered.filter(r=>r.status==='pending'), approved: filtered.filter(r=>r.status==='approved'), rejected: filtered.filter(r=>r.status==='rejected'), history: filtered };
+  renderContent(map[tab], tab);
+}
+
+function showTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.className = 'tab' + (['pending','approved','rejected','history'][i]===t?' active':'');
+  });
+  render();
+}
+
+async function setStatus(id, status) {
+
+    const payment = allRequests.find(r => r.id == id);
+
+    if (!payment) return;
+
+    await update(ref(db, "payments/" + payment.firebaseKey), {
+        status: status,
+        resolvedAt: new Date().toISOString()
+    });
+
+}
+
+function approve(id) { setStatus(id,'approved'); }
+function reject(id) { setStatus(id,'rejected'); }
+
+function toggleNote(id) {
+  const el = document.getElementById('note-'+id);
+  el.style.display = el.style.display==='none'||!el.style.display ? 'block' : 'none';
+}
+
+async function saveNote(id) {
+
+    const text = document.getElementById("note-text-" + id).value.trim();
+
+    const payment = allRequests.find(r => r.id == id);
+
+    if (!payment) return;
+
+    await update(ref(db, "payments/" + payment.firebaseKey), {
+        note: text
+    });
+
+}
+
+function exportCSV() {
+  const all = allRequests.filter(r => r.status === 'approved');
+  if (!all.length) { alert('No approved payments to export.'); return; }
+  const rows = [['Name','Mobile','Amount','Type','Purpose','Date','App','TxnID','Status','Approved At']];
+  all.forEach(r=>rows.push([r.name,r.mobile||'',r.amount,r.type,r.purpose,r.date,r.app||'',r.txnid||'',r.status,r.resolvedAt||'']));
+  const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'payments-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+window.doLogin = doLogin;
+window.showTab = showTab;
+window.approve = approve;
+window.reject = reject;
+window.toggleNote = toggleNote;
+window.saveNote = saveNote;
+window.exportCSV = exportCSV;
+window.setStatus = setStatus;
+</script>
+</body>
+</html>
